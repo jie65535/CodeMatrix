@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CodeMatrix
 {
-    class UCCodeMatrix : Control
+    internal class UCCodeMatrix : Control
     {
-        static readonly byte[] Codes = new byte[] { 0x55, 0x1C, 0xBD, 0xE9, 0x7A };
+        private static readonly byte[] Codes = new byte[] { 0x55, 0x1C, 0xBD, 0xE9, 0x7A };
 
-        static readonly Random Random = new Random();
+        private static readonly Random Random = new Random();
         public SizeF CellSize { get; set; }
         public int Columns { get; set; }
         public int Rows { get; set; }
@@ -24,7 +20,7 @@ namespace CodeMatrix
         /// <summary>
         /// 方向
         /// </summary>
-        enum Directions
+        private enum Directions
         {
             /// <summary>
             /// 垂直方向
@@ -41,25 +37,30 @@ namespace CodeMatrix
 
         public UCCodeMatrix()
         {
-            Font = new Font("微软雅黑", 14);
-            BackColor = Color.FromArgb(18, 13, 25);
-            ForeColor = Color.FromArgb(208, 236, 92);
-            CodeBrush = new SolidBrush(ForeColor);
-            EmptyCellBrush = new SolidBrush(Color.FromArgb(65, 52, 76));
-            DefaultLineBackColor = new SolidBrush(Color.FromArgb(42, 43, 60));
-            SelectLineBackColor = new SolidBrush(Color.FromArgb(32, 31, 28));
-            SelectCellBorderPen = new Pen(Color.FromArgb(109, 232, 228), 1);
+            InitData();
+            InitComponent();
+        }
+
+        private void InitData()
+        {
             Rows = 5;
             Columns = 5;
             CellSize = new SizeF(40, 40);
-            Width = (int)(CellSize.Width * Columns + 100);
-            Height = (int)(CellSize.Height * Rows + 10);
-            Margin = Padding.Empty;
             _currDir = Directions.Horizontal;
-            DoubleBuffered = true;
         }
 
-        bool _IsLoaded;
+        private void InitComponent()
+        {
+            MinimumSize = new Size((int)(CellSize.Width * Columns + 100), (int)(CellSize.Height * Rows + 10));
+            Margin = Padding.Empty;
+            DoubleBuffered = true;
+
+            Font = Styles.Default.Font;
+            BackColor = Styles.Default.BackColor;
+            ForeColor = Styles.Default.ForeColor;
+        }
+
+        private bool _IsLoaded;
 
         protected override void OnVisibleChanged(EventArgs e)
         {
@@ -71,7 +72,7 @@ namespace CodeMatrix
             base.OnVisibleChanged(e);
         }
 
-        void Load()
+        private void Load()
         {
             Matrix = new byte[Columns, Rows];
             for (int col = 0; col < Columns; col++)
@@ -83,28 +84,15 @@ namespace CodeMatrix
             CodeMatrixRect = new RectangleF(blockOffset, blockSize);
         }
 
-        protected override void OnForeColorChanged(EventArgs e)
-        {
-            CodeBrush = new SolidBrush(ForeColor);
-            base.OnForeColorChanged(e);
-        }
-
-        Brush CodeBrush;
-        Brush EmptyCellBrush;
-        Brush DefaultLineBackColor;
-        Brush SelectLineBackColor;
-        Pen   SelectCellBorderPen;
-
         protected override void OnPaint(PaintEventArgs e)
         {
             if (!_IsLoaded) return;
 
             var offset = new PointF(SelectPoint.X*CellSize.Width, SelectPoint.Y*CellSize.Height);
             if (_currDir == Directions.Horizontal)
-                e.Graphics.FillRectangle(DefaultLineBackColor, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
+                e.Graphics.FillRectangle(Styles.Default.DefaultLineBackColor, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
             else if (_currDir == Directions.Vertical)
-                e.Graphics.FillRectangle(DefaultLineBackColor, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
-
+                e.Graphics.FillRectangle(Styles.Default.DefaultLineBackColor, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
 
             Cursor = Cursors.Default;
             if (CursorPosition.X >= 0 && Matrix[CursorPosition.X, CursorPosition.Y] != 0)
@@ -113,8 +101,8 @@ namespace CodeMatrix
                 {
                     if (CursorPosition.Y == SelectPoint.Y)
                     {
-                        offset.X = CursorPosition.X*CellSize.Width;
-                        e.Graphics.FillRectangle(SelectLineBackColor, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
+                        offset.X = CursorPosition.X * CellSize.Width;
+                        e.Graphics.FillRectangle(Styles.Default.SelectLineBackColor, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
                         Cursor = Cursors.Hand;
                     }
                 }
@@ -122,8 +110,8 @@ namespace CodeMatrix
                 {
                     if (CursorPosition.X == SelectPoint.X)
                     {
-                        offset.Y = CursorPosition.Y*CellSize.Height;
-                        e.Graphics.FillRectangle(SelectLineBackColor, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
+                        offset.Y = CursorPosition.Y * CellSize.Height;
+                        e.Graphics.FillRectangle(Styles.Default.SelectLineBackColor, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
                         Cursor = Cursors.Hand;
                     }
                 }
@@ -132,11 +120,10 @@ namespace CodeMatrix
                 {
                     offset.X += CodeMatrixRect.X;
                     offset.Y += CodeMatrixRect.Y;
-                    e.Graphics.DrawRectangle(SelectCellBorderPen, offset.X, offset.Y, CellSize.Width-1, CellSize.Height - 1);
-                    e.Graphics.DrawRectangle(SelectCellBorderPen, offset.X+4, offset.Y+4, CellSize.Width-8 - 1, CellSize.Height-8 - 1);
+                    e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, offset.X, offset.Y, CellSize.Width - 1, CellSize.Height - 1);
+                    e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, offset.X + 4, offset.Y + 4, CellSize.Width - 8 - 1, CellSize.Height - 8 - 1);
                 }
             }
-
 
             for (int col = 0; col < Columns; col++)
             {
@@ -144,12 +131,17 @@ namespace CodeMatrix
                 {
                     var cellOffset = new PointF(col*CellSize.Width, row*CellSize.Height);
                     //var cellRect = new RectangleF(cellOffset, CellSize);
-                    Brush brush = CodeBrush;
-                    string code = Matrix[col, row].ToString("X2");
+                    Brush brush;
+                    string code;
                     if (Matrix[col, row] == 0)
                     {
                         code = "[  ]";
-                        brush = EmptyCellBrush;
+                        brush = Styles.Default.EmptyCellBrush;
+                    }
+                    else
+                    {
+                        brush = Styles.Default.CodeBrush;
+                        code = Matrix[col, row].ToString("X2");
                     }
                     var codeSize = e.Graphics.MeasureString(code, Font);
                     var codeOffset = new PointF((CellSize.Width-codeSize.Width)/2, (CellSize.Height-codeSize.Height)/2);
@@ -210,7 +202,6 @@ namespace CodeMatrix
                     }
                 }
             }
-
 
             base.OnMouseClick(e);
         }
