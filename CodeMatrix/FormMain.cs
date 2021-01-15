@@ -15,10 +15,18 @@ namespace CodeMatrix
         public FormMain()
         {
             InitializeComponent();
-           
-            var matrix = new UCCodeMatrix();
-            Controls.Add(matrix);
-            ClientSize = matrix.Size;
+
+            BackColor = Styles.Default.BackColor;
+
+            var codeMatrix = new UCCodeMatrix();
+            var codeQueue = new UCCodeQueue();
+            codeQueue.Location = new Point(codeMatrix.Size.Width, 0);
+            Controls.Add(codeMatrix);
+            Controls.Add(codeQueue);
+
+            var size = codeMatrix.Size;
+            size.Width += codeQueue.Width;
+            ClientSize = size;
         }
 
     }

@@ -44,8 +44,8 @@ namespace CodeMatrix
 
         private void InitData()
         {
-            Rows = 9;
-            Columns = 16;
+            Rows = 7;
+            Columns = 7;
             CellSize = new SizeF(40, 40);
             _currDir = Directions.Horizontal;
             HoverPoint = new Point(-1, -1);
@@ -57,9 +57,9 @@ namespace CodeMatrix
             Margin = Padding.Empty;
             DoubleBuffered = true;
 
-            Font = Styles.Default.Font;
+            Font = Styles.Default.CodeFontA;
             BackColor = Styles.Default.BackColor;
-            ForeColor = Styles.Default.ForeColor;
+            ForeColor = Styles.Default.CodeColor;
         }
 
         private bool _IsLoaded;
@@ -137,7 +137,10 @@ namespace CodeMatrix
                     }
                     else
                     {
-                        brush = Styles.Default.CodeBrush;
+                        if (HoverPoint.X == col && HoverPoint.Y == row)
+                            brush = Styles.Default.SelectBrush;
+                        else
+                            brush = Styles.Default.CodeBrush;
                         code = Matrix[col, row].ToString("X2");
                     }
                     var codeSize = e.Graphics.MeasureString(code, Font);
@@ -147,6 +150,7 @@ namespace CodeMatrix
                 }
             }
 
+            e.Graphics.DrawRectangle(Styles.Default.DefaultBorderPen, 0, 0, Width - 1, Height - 1);
             //e.Graphics.DrawString(_paintCount.ToString(), Font, Styles.Default.CodeBrush, 0, 0);
         }
 
