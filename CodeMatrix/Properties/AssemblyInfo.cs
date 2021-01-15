@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("CodeMatrix")]
-[assembly: AssemblyCopyright("Copyright ©  2020")]
+[assembly: AssemblyCopyright("© 2020 jie65535@github.com")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -14,7 +14,8 @@ namespace CodeMatrix
         public int Rows { get; set; }
         public byte[,] Matrix { get; set; }
         public Point SelectPoint { get; private set; }
-        public Point CursorPosition { get; private set; }
+        public Point CursorPoint { get; private set; }
+        public Point HoverPoint { get; private set; }
         public RectangleF CodeMatrixRect { get; private set; }
 
         /// <summary>
@@ -43,10 +44,11 @@ namespace CodeMatrix
 
         private void InitData()
         {
-            Rows = 5;
-            Columns = 5;
+            Rows = 9;
+            Columns = 16;
             CellSize = new SizeF(40, 40);
             _currDir = Directions.Horizontal;
+            HoverPoint = new Point(-1, -1);
         }
 
         private void InitComponent()
@@ -84,9 +86,11 @@ namespace CodeMatrix
             CodeMatrixRect = new RectangleF(blockOffset, blockSize);
         }
 
+        //int _paintCount;
         protected override void OnPaint(PaintEventArgs e)
         {
             if (!_IsLoaded) return;
+            //_paintCount++;
 
             var offset = new PointF(SelectPoint.X*CellSize.Width, SelectPoint.Y*CellSize.Height);
             if (_currDir == Directions.Horizontal)
@@ -94,35 +98,28 @@ namespace CodeMatrix
             else if (_currDir == Directions.Vertical)
                 e.Graphics.FillRectangle(Styles.Default.DefaultLineBackColor, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
 
-            Cursor = Cursors.Default;
-            if (CursorPosition.X >= 0 && Matrix[CursorPosition.X, CursorPosition.Y] != 0)
+            if (HoverPoint.X >= 0)
             {
+                Cursor = Cursors.Hand;
                 if (_currDir == Directions.Horizontal)
                 {
-                    if (CursorPosition.Y == SelectPoint.Y)
-                    {
-                        offset.X = CursorPosition.X * CellSize.Width;
-                        e.Graphics.FillRectangle(Styles.Default.SelectLineBackColor, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
-                        Cursor = Cursors.Hand;
-                    }
+                    offset.X = HoverPoint.X * CellSize.Width;
+                    e.Graphics.FillRectangle(Styles.Default.SelectLineBackColor, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
                 }
                 else if (_currDir == Directions.Vertical)
                 {
-                    if (CursorPosition.X == SelectPoint.X)
-                    {
-                        offset.Y = CursorPosition.Y * CellSize.Height;
-                        e.Graphics.FillRectangle(Styles.Default.SelectLineBackColor, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
-                        Cursor = Cursors.Hand;
-                    }
+                    offset.Y = HoverPoint.Y * CellSize.Height;
+                    e.Graphics.FillRectangle(Styles.Default.SelectLineBackColor, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
                 }
 
-                if (Cursor == Cursors.Hand)
-                {
-                    offset.X += CodeMatrixRect.X;
-                    offset.Y += CodeMatrixRect.Y;
-                    e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, offset.X, offset.Y, CellSize.Width - 1, CellSize.Height - 1);
-                    e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, offset.X + 4, offset.Y + 4, CellSize.Width - 8 - 1, CellSize.Height - 8 - 1);
-                }
+                offset.X += CodeMatrixRect.X;
+                offset.Y += CodeMatrixRect.Y;
+                e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, offset.X, offset.Y, CellSize.Width - 1, CellSize.Height - 1);
+                e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, offset.X + 4, offset.Y + 4, CellSize.Width - 8 - 1, CellSize.Height - 8 - 1);
+            }
+            else
+            {
+                Cursor = Cursors.Default;
             }
 
             for (int col = 0; col < Columns; col++)
@@ -149,6 +146,8 @@ namespace CodeMatrix
                     e.Graphics.DrawString(code, Font, brush, codePoint);
                 }
             }
+
+            //e.Graphics.DrawString(_paintCount.ToString(), Font, Styles.Default.CodeBrush, 0, 0);
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
@@ -160,17 +159,30 @@ namespace CodeMatrix
             {
                 var offset = new PointF(e.X-CodeMatrixRect.X, e.Y-CodeMatrixRect.Y);
                 var current = new Point((int)(offset.X / CellSize.Width), (int)(offset.Y / CellSize.Height));
-                if (CursorPosition != current)
+                if (CursorPoint != current)
                 {
-                    CursorPosition = current;
-                    Invalidate();
+                    CursorPoint = current;
+                    var hoverPoint = new Point(-1, -1);
+                    if (Matrix[CursorPoint.X, CursorPoint.Y] != 0)
+                    {
+                        if (_currDir == Directions.Horizontal && CursorPoint.Y == SelectPoint.Y)
+                            hoverPoint = CursorPoint;
+                        else if (_currDir == Directions.Vertical && CursorPoint.X == SelectPoint.X)
+                            hoverPoint = CursorPoint;
+                    }
+                    if (HoverPoint != hoverPoint)
+                    {
+                        HoverPoint = hoverPoint;
+                        Invalidate();
+                    }
+                    
                 }
             }
             else
             {
-                if (CursorPosition.X >= 0)
+                if (HoverPoint.X >= 0)
                 {
-                    CursorPosition = new Point(-1, -1);
+                    HoverPoint = CursorPoint = new Point(-1, -1);
                     Invalidate();
                 }
             }
@@ -179,28 +191,13 @@ namespace CodeMatrix
 
         protected override void OnMouseClick(MouseEventArgs e)
         {
-            if (CursorPosition.X >= 0 && Matrix[CursorPosition.X, CursorPosition.Y] != 0)
+            if (HoverPoint.X >= 0)
             {
-                if (_currDir == Directions.Horizontal)
-                {
-                    if (CursorPosition.Y == SelectPoint.Y)
-                    {
-                        Matrix[CursorPosition.X, CursorPosition.Y] = 0;
-                        _currDir = Directions.Vertical;
-                        SelectPoint = CursorPosition;
-                        Invalidate();
-                    }
-                }
-                else if (_currDir == Directions.Vertical)
-                {
-                    if (CursorPosition.X == SelectPoint.X)
-                    {
-                        Matrix[CursorPosition.X, CursorPosition.Y] = 0;
-                        _currDir = Directions.Horizontal;
-                        SelectPoint = CursorPosition;
-                        Invalidate();
-                    }
-                }
+                SelectPoint = HoverPoint;
+                HoverPoint = new Point(-1, -1);
+                Matrix[SelectPoint.X, SelectPoint.Y] = 0;
+                _currDir = _currDir == Directions.Horizontal ? Directions.Vertical : Directions.Horizontal;
+                Invalidate();
             }
 
             base.OnMouseClick(e);
