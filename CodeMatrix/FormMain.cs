@@ -20,6 +20,10 @@ namespace CodeMatrix
 
             var codeMatrix = new UCCodeMatrix();
             var codeQueue = new UCCodeQueue();
+
+            codeMatrix.HoverValueChangedEvent += (_, value) => codeQueue.HoverCode = value;
+            codeMatrix.CodeSelectedEvent += (_, value) => codeQueue.InputCode(value);
+
             codeQueue.Location = new Point(codeMatrix.Size.Width, 0);
             Controls.Add(codeMatrix);
             Controls.Add(codeQueue);

@@ -15,8 +15,22 @@ namespace CodeMatrix
         public byte[,] Matrix { get; set; }
         public Point SelectPoint { get; private set; }
         public Point CursorPoint { get; private set; }
-        public Point HoverPoint { get; private set; }
+        private Point _HoverPoint;
+        public Point HoverPoint
+        {
+            get => _HoverPoint;
+            set
+            {
+                _HoverPoint = value;
+                if (HoverPoint.X >= 0)
+                    HoverValueChangedEvent?.Invoke(this, Matrix[HoverPoint.X, HoverPoint.Y]);
+                else
+                    HoverValueChangedEvent?.Invoke(this, 0);
+            }
+        }
         public RectangleF CodeMatrixRect { get; private set; }
+        public event EventHandler<byte> HoverValueChangedEvent;
+        public event EventHandler<byte> CodeSelectedEvent;
 
         /// <summary>
         /// 方向
@@ -179,7 +193,6 @@ namespace CodeMatrix
                         HoverPoint = hoverPoint;
                         Invalidate();
                     }
-                    
                 }
             }
             else
@@ -199,11 +212,11 @@ namespace CodeMatrix
             {
                 SelectPoint = HoverPoint;
                 HoverPoint = new Point(-1, -1);
-                Matrix[SelectPoint.X, SelectPoint.Y] = 0;
                 _currDir = _currDir == Directions.Horizontal ? Directions.Vertical : Directions.Horizontal;
+                CodeSelectedEvent?.Invoke(this, Matrix[SelectPoint.X, SelectPoint.Y]);
+                Matrix[SelectPoint.X, SelectPoint.Y] = 0;
                 Invalidate();
             }
-
             base.OnMouseClick(e);
         }
     }
