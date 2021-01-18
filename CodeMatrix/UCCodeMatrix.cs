@@ -6,10 +6,7 @@ namespace CodeMatrix
 {
     internal class UCCodeMatrix : Control
     {
-        private static readonly byte[] Codes = new byte[] { 0x55, 0x1C, 0xBD, 0xE9, 0x7A };
-
-        private static readonly Random Random = new Random();
-        public SizeF CellSize { get; set; }
+        public Size CellSize { get; set; }
         public int Columns { get; set; }
         public int Rows { get; set; }
         public byte[,] Matrix { get; set; }
@@ -58,16 +55,16 @@ namespace CodeMatrix
 
         private void InitData()
         {
-            Rows = 7;
-            Columns = 7;
-            CellSize = new SizeF(40, 40);
+            Rows = 5;
+            Columns = 5;
             _currDir = Directions.Horizontal;
             HoverPoint = new Point(-1, -1);
         }
 
         private void InitComponent()
         {
-            MinimumSize = new Size((int)(CellSize.Width * Columns + 100), (int)(CellSize.Height * Rows + 10));
+            CellSize = Styles.Default.CellSizeA;
+            MinimumSize = new Size(CellSize.Width * Columns + 100, CellSize.Height * Rows + 10);
             Margin = Padding.Empty;
             DoubleBuffered = true;
 
@@ -93,7 +90,7 @@ namespace CodeMatrix
             Matrix = new byte[Columns, Rows];
             for (int col = 0; col < Columns; col++)
                 for (int row = 0; row < Rows; row++)
-                    Matrix[col, row] = Codes[Random.Next(Codes.Length)];
+                    Matrix[col, row] = Common.Codes[Common.Random.Next(Common.Codes.Length)];
 
             var blockSize = new SizeF(Columns*CellSize.Width, Rows*CellSize.Height);
             var blockOffset = new PointF((Width-blockSize.Width)/2, (Height-blockSize.Height)/2);
@@ -108,9 +105,9 @@ namespace CodeMatrix
 
             var offset = new PointF(SelectPoint.X*CellSize.Width, SelectPoint.Y*CellSize.Height);
             if (_currDir == Directions.Horizontal)
-                e.Graphics.FillRectangle(Styles.Default.DefaultLineBackColor, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
+                e.Graphics.FillRectangle(Styles.Default.DefaultLineBrush, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
             else if (_currDir == Directions.Vertical)
-                e.Graphics.FillRectangle(Styles.Default.DefaultLineBackColor, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
+                e.Graphics.FillRectangle(Styles.Default.DefaultLineBrush, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
 
             if (HoverPoint.X >= 0)
             {
@@ -118,18 +115,18 @@ namespace CodeMatrix
                 if (_currDir == Directions.Horizontal)
                 {
                     offset.X = HoverPoint.X * CellSize.Width;
-                    e.Graphics.FillRectangle(Styles.Default.SelectLineBackColor, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
+                    e.Graphics.FillRectangle(Styles.Default.SelectLineBrush, offset.X + CodeMatrixRect.X, 0, CellSize.Width, Height);
                 }
                 else if (_currDir == Directions.Vertical)
                 {
                     offset.Y = HoverPoint.Y * CellSize.Height;
-                    e.Graphics.FillRectangle(Styles.Default.SelectLineBackColor, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
+                    e.Graphics.FillRectangle(Styles.Default.SelectLineBrush, 0, offset.Y + CodeMatrixRect.Y, Width, CellSize.Height);
                 }
 
                 offset.X += CodeMatrixRect.X;
                 offset.Y += CodeMatrixRect.Y;
                 e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, offset.X, offset.Y, CellSize.Width - 1, CellSize.Height - 1);
-                e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, offset.X + 4, offset.Y + 4, CellSize.Width - 8 - 1, CellSize.Height - 8 - 1);
+                e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, offset.X + 3, offset.Y + 3, CellSize.Width - 6 - 1, CellSize.Height - 6 - 1);
             }
             else
             {
@@ -180,14 +177,15 @@ namespace CodeMatrix
                 if (CursorPoint != current)
                 {
                     CursorPoint = current;
-                    var hoverPoint = new Point(-1, -1);
-                    if (Matrix[CursorPoint.X, CursorPoint.Y] != 0)
-                    {
-                        if (_currDir == Directions.Horizontal && CursorPoint.Y == SelectPoint.Y)
-                            hoverPoint = CursorPoint;
-                        else if (_currDir == Directions.Vertical && CursorPoint.X == SelectPoint.X)
-                            hoverPoint = CursorPoint;
-                    }
+                    Point hoverPoint;
+                    if (_currDir == Directions.Vertical)
+                        hoverPoint = new Point(SelectPoint.X, CursorPoint.Y);
+                    else
+                        hoverPoint = new Point(CursorPoint.X, SelectPoint.Y);
+                    
+                    if (Matrix[hoverPoint.X, hoverPoint.Y] == 0)
+                        hoverPoint = new Point(-1, -1);
+
                     if (HoverPoint != hoverPoint)
                     {
                         HoverPoint = hoverPoint;
@@ -211,9 +209,9 @@ namespace CodeMatrix
             if (HoverPoint.X >= 0)
             {
                 SelectPoint = HoverPoint;
-                HoverPoint = new Point(-1, -1);
                 _currDir = _currDir == Directions.Horizontal ? Directions.Vertical : Directions.Horizontal;
                 CodeSelectedEvent?.Invoke(this, Matrix[SelectPoint.X, SelectPoint.Y]);
+                HoverPoint = CursorPoint = new Point(-1, -1);
                 Matrix[SelectPoint.X, SelectPoint.Y] = 0;
                 Invalidate();
             }

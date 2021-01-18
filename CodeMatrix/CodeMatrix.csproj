@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common.cs" />
     <Compile Include="FormMain.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -59,6 +60,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="UCCodeQueue.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UCCodeTarget.cs">
       <SubType>Component</SubType>
     </Compile>
     <EmbeddedResource Include="FormMain.resx">

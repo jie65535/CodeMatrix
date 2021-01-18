@@ -34,15 +34,14 @@ namespace CodeMatrix
 
         private void InitData()
         {
-            CellSize = new Size(25, 25);
-            BufferSize = 7;
-
+            BufferSize = 4;
             CurrIndex = 0;
             HoverCode = 0;
         }
 
         private void InitComponent()
         {
+            CellSize = Styles.Default.CellSizeB;
             Margin = Padding.Empty;
             Padding = new Padding(10);
             CellMargin = new Padding(3);
@@ -75,18 +74,20 @@ namespace CodeMatrix
             
             if (CurrIndex < BufferSize)
             {
-                e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, cellOffset);
+                int i = CurrIndex;
                 if (HoverCode > 0)
                 {
+                    i++;
+                    e.Graphics.DrawRectangle(Styles.Default.SelectCellBorderPen, cellOffset);
                     var code = HoverCode.ToString("X2");
                     var codeSize = e.Graphics.MeasureString(code, Font);
                     var codeOffset = new PointF((CellSize.Width-codeSize.Width)/2, (CellSize.Height-codeSize.Height)/2);
                     var codePoint = new PointF(codeOffset.X+cellOffset.X, codeOffset.Y+cellOffset.Y);
                     e.Graphics.DrawString(code, Font, Styles.Default.SelectBrush, codePoint);
+                    cellOffset.X += cellOffsetWidth;
                 }
-                cellOffset.X += cellOffsetWidth;
 
-                for (int i = CurrIndex+1; i < BufferSize; i++)
+                for (; i < BufferSize; i++)
                 {
                     e.Graphics.DrawRectangle(Styles.Default.EmptyCellBorderPen, cellOffset);
                     cellOffset.X += cellOffsetWidth;
@@ -102,10 +103,7 @@ namespace CodeMatrix
         public void InputCode(byte code)
         {
             if (CurrIndex < BufferSize)
-            {
                 Buffer[CurrIndex++] = code;
-                HoverCode = 0;
-            }
         }
 
         public void ClearBuffer()
