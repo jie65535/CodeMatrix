@@ -69,8 +69,8 @@ namespace CodeMatrix
 
         private void InitData()
         {
-            Rows = 5;
-            Columns = 5;
+            Rows = 7;
+            Columns = 7;
             _currDir = Directions.Horizontal;
             HoverPoint = new Point(-1, -1);
         }

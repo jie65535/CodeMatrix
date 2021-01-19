@@ -31,6 +31,7 @@ namespace CodeMatrix
         public int OffsetIndex { get; private set; }
         public int CurrIndex { get; private set; }
         public byte[] TargetCodes { get; } = new byte[32];
+        private int[] _Next = new int[32];
 
         public enum State
         {
@@ -49,14 +50,32 @@ namespace CodeMatrix
 
         private void InitData()
         {
-            BufferSize = 4;
-            TargetLength = Common.Random.Next(2) + 2;
+            BufferSize = 9;
+            TargetLength = Common.Random.Next(3, 6);
             OffsetIndex = 0;
             CurrIndex = 0;
             HoverCode = 0;
             CurrState = State.Input;
             for (int i = 0; i < TargetLength; i++)
                 TargetCodes[i] = Common.Codes[Common.Random.Next(Common.Codes.Length)];
+            _Next[0] = -1;
+            _Next[1] = 0;
+            for (int i = 1, j = 0; i < TargetLength;)
+            {
+                if (j == -1 || TargetCodes[i] == TargetCodes[j])
+                {
+                    i++;
+                    j++;
+                    if (TargetCodes[i] != TargetCodes[j])
+                        _Next[i] = j;
+                    else
+                        _Next[i] = _Next[j];
+                }
+                else
+                {
+                    j = _Next[j];
+                }
+            }
         }
 
         private void InitComponent()
@@ -177,10 +196,25 @@ namespace CodeMatrix
         {
             if (CurrState == State.Input)
             {
-                if (code == TargetCodes[CurrIndex])
-                    CurrIndex++;
-                else
-                    OffsetIndex++;
+                while (true)
+                {
+                    if (CurrIndex == -1)
+                    {
+                        CurrIndex = 0;
+                        break;
+                    }
+                    if (code == TargetCodes[CurrIndex])
+                    {
+                        CurrIndex++;
+                        break;
+                    }
+                    else
+                    {
+                        var next = _Next[CurrIndex];
+                        OffsetIndex += CurrIndex - next;
+                        CurrIndex = next;
+                    }
+                }
 
                 if (OffsetIndex + TargetLength > BufferSize)
                     CurrState = State.Reject;

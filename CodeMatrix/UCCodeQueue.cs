@@ -34,7 +34,7 @@ namespace CodeMatrix
 
         private void InitData()
         {
-            BufferSize = 4;
+            BufferSize = 9;
             CurrIndex = 0;
             HoverCode = 0;
         }
