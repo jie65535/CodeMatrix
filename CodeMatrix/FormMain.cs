@@ -30,6 +30,10 @@ namespace CodeMatrix
                 {
                     Location = new Point(codeQueue.Location.X, y)
                 };
+                codeTargets[i].HoverCodeEvent += (_, value) =>
+                {
+                    codeMatrix.HighlightCode = value;
+                };
             }
 
             codeMatrix.HoverValueChangedEvent += (_, value) =>

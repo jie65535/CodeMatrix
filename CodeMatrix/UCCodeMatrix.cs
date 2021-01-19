@@ -26,6 +26,20 @@ namespace CodeMatrix
             }
         }
         public RectangleF CodeMatrixRect { get; private set; }
+        private byte _HighlightCode;
+        public byte HighlightCode
+        {
+            get => _HighlightCode;
+            set
+            {
+                if (_HighlightCode != value)
+                {
+                    _HighlightCode = value;
+                    Invalidate();
+                }
+            }
+        }
+
         public event EventHandler<byte> HoverValueChangedEvent;
         public event EventHandler<byte> CodeSelectedEvent;
 
@@ -153,6 +167,14 @@ namespace CodeMatrix
                         else
                             brush = Styles.Default.CodeBrush;
                         code = Matrix[col, row].ToString("X2");
+                    }
+                    if (HighlightCode != 0 && HighlightCode == Matrix[col, row])
+                    {
+                        e.Graphics.DrawRectangle(Styles.Default.SelectedCellBorderPen,
+                            CodeMatrixRect.X+cellOffset.X+1,
+                            CodeMatrixRect.Y+cellOffset.Y+1,
+                            CellSize.Width - 3,
+                            CellSize.Height - 3);
                     }
                     var codeSize = e.Graphics.MeasureString(code, Font);
                     var codeOffset = new PointF((CellSize.Width-codeSize.Width)/2, (CellSize.Height-codeSize.Height)/2);

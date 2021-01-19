@@ -128,10 +128,46 @@ namespace CodeMatrix
             g.DrawString(codeStr, font, brush, codePoint);
         }
 
+        private int HoverIndex = -1;
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            
-            //HoverCodeEvent?.Invoke(this, _HoverCode);
+            if (CurrState == State.Input)
+            {
+                int hoverIndex = -1;
+                //Point currPoint = new Point(e.X - Padding.Left, e.Y - Padding.Top - CellMargin.Top);
+                //if (currPoint.X >= 0 && currPoint.Y >= 0 && currPoint.Y < CellSize.Height)
+                //{
+                //    int cellfullwidth = CellSize.Width + CellMargin.Horizontal;
+                //    int index = currPoint.X / cellfullwidth - OffsetIndex;
+                //    int offset = currPoint.X % cellfullwidth;
+                //    if (offset > CellMargin.Left && offset < cellfullwidth - CellMargin.Left)
+                //    {
+                //        if (index >= 0 && index < TargetLength)
+                //        {
+                //            hoverIndex = index;
+                //        }
+                //    }
+                //}
+                Point currPoint = new Point(e.X - Padding.Left, e.Y - Padding.Top);
+                if (currPoint.X >= 0 && currPoint.Y >= 0 && currPoint.Y < CellSize.Height)
+                {
+                    int cellfullwidth = CellSize.Width + CellMargin.Horizontal;
+                    int index = currPoint.X / cellfullwidth - OffsetIndex;
+                    if (index >= 0 && index < TargetLength)
+                    {
+                        hoverIndex = index;
+                    }
+                }
+
+                if (HoverIndex != hoverIndex)
+                {
+                    HoverIndex = hoverIndex;
+                    if (HoverIndex >= 0)
+                        HoverCodeEvent?.Invoke(this, TargetCodes[HoverIndex]);
+                    else
+                        HoverCodeEvent?.Invoke(this, 0);
+                }
+            }
 
 
             base.OnMouseMove(e);

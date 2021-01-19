@@ -4,4 +4,4 @@
 
 示例图片：
 
-![演示动图](images/CodeMatrix3.gif)
+![演示动图](images/CodeMatrix4.gif)
