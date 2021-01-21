@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
 namespace CodeMatrix
@@ -49,8 +42,6 @@ namespace CodeMatrix
                     codeTarget.InputCode(value);
             };
 
-
-
             Controls.Add(codeMatrix);
             Controls.Add(codeQueue);
             Controls.AddRange(codeTargets);
@@ -59,6 +50,5 @@ namespace CodeMatrix
             size.Width += codeQueue.Width;
             ClientSize = size;
         }
-
     }
 }
