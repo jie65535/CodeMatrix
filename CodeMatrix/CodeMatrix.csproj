@@ -46,6 +46,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseControl\MyButton.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Common.cs" />
     <Compile Include="FormMain.cs">
       <SubType>Form</SubType>
@@ -65,6 +68,7 @@
     <Compile Include="UCCodeTarget.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Utils\FormHelper.cs" />
     <EmbeddedResource Include="FormMain.resx">
       <DependentUpon>FormMain.cs</DependentUpon>
     </EmbeddedResource>

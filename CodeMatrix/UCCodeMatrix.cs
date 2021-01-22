@@ -19,14 +19,14 @@ namespace CodeMatrix
         private Size _CellSize;
 
         /// <summary>
+        /// The code matrix size
+        /// </summary>
+        private Size _CodeMatrixSize = new Size(5, 5);
+
+        /// <summary>
         /// The code matrix rect
         /// </summary>
         private RectangleF _CodeMatrixRect;
-
-        /// <summary>
-        /// The columns
-        /// </summary>
-        private int _Columns = 5;
 
         /// <summary>
         /// The curr dir
@@ -57,11 +57,6 @@ namespace CodeMatrix
         /// The matrix
         /// </summary>
         private byte[,] _Matrix;
-
-        /// <summary>
-        /// The rows
-        /// </summary>
-        private int _Rows = 5;
 
         /// <summary>
         /// The select point
@@ -102,23 +97,20 @@ namespace CodeMatrix
             Horizontal,
         }
 
-        /// <summary>
-        /// Gets or sets the columns.
-        /// </summary>
-        /// <value>
-        /// The columns.
-        /// </value>
-        /// <exception cref="ArgumentOutOfRangeException">Columns - 设置矩阵大小数值不能小于 {MinimumMatrixSize.Width} 或者大于 {MaximumMatrixSize.Width}</exception>
-        public int Columns
+        public Size CodeMatrixSize
         {
-            get => _Columns;
+            get => _CodeMatrixSize;
             set
             {
-                if (_Columns != value)
+                if (_CodeMatrixSize != value)
                 {
-                    if (value < MinimumMatrixSize.Width || value > MaximumMatrixSize.Width)
-                        throw new ArgumentOutOfRangeException("Columns", value, $"设置矩阵大小数值不能小于 {MinimumMatrixSize.Width} 或者大于 {MaximumMatrixSize.Width}");
-                    _Columns = value;
+                    if (value.Width < MinimumMatrixSize.Width
+                        || value.Height < MinimumMatrixSize.Height
+                        || value.Width > MaximumMatrixSize.Width
+                        || value.Height > MaximumMatrixSize.Height)
+                        throw new ArgumentOutOfRangeException("CodeMatrixSize", value,
+                            $"设置矩阵大小数值不能小于 ({MinimumMatrixSize.Width}, {MinimumMatrixSize.Height}) 或者大于 ({MaximumMatrixSize.Width}, {MaximumMatrixSize.Height})");
+                    _CodeMatrixSize = value;
                     OnCodeMatrixSizeChanged();
                 }
             }
@@ -139,27 +131,6 @@ namespace CodeMatrix
                 {
                     _HighlightCode = value;
                     Invalidate();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the rows.
-        /// </summary>
-        /// <value>
-        /// The rows.
-        /// </value>
-        public int Rows
-        {
-            get => _Rows;
-            set
-            {
-                if (_Rows != value)
-                {
-                    if (value < MinimumMatrixSize.Height || value > MaximumMatrixSize.Height)
-                        throw new ArgumentOutOfRangeException("value", value, $"设置矩阵大小数值不能小于 {MinimumMatrixSize.Height} 或者大于 {MaximumMatrixSize.Height}");
-                    _Rows = value;
-                    OnCodeMatrixSizeChanged();
                 }
             }
         }
@@ -281,28 +252,28 @@ namespace CodeMatrix
                 Cursor = Cursors.Default;
             }
 
-            for (int col = 0; col < Columns; col++)
+            for (int x = 0; x < CodeMatrixSize.Width; x++)
             {
-                for (int row = 0; row < Rows; row++)
+                for (int y = 0; y < CodeMatrixSize.Height; y++)
                 {
-                    var cellOffset = new PointF(col*_CellSize.Width, row*_CellSize.Height);
+                    var cellOffset = new PointF(x*_CellSize.Width, y*_CellSize.Height);
                     //var cellRect = new RectangleF(cellOffset, CellSize);
                     Brush brush;
                     string code;
-                    if (_Matrix[col, row] == 0)
+                    if (_Matrix[x, y] == 0)
                     {
                         code = "[  ]";
                         brush = Styles.Default.EmptyCellBrush;
                     }
                     else
                     {
-                        if (HoverPoint.X == col && HoverPoint.Y == row)
+                        if (HoverPoint.X == x && HoverPoint.Y == y)
                             brush = Styles.Default.SelectBrush;
                         else
                             brush = Styles.Default.CodeBrush;
-                        code = _Matrix[col, row].ToString("X2");
+                        code = _Matrix[x, y].ToString("X2");
                     }
-                    if (HighlightCode != 0 && HighlightCode == _Matrix[col, row])
+                    if (HighlightCode != 0 && HighlightCode == _Matrix[x, y])
                     {
                         e.Graphics.DrawRectangle(Styles.Default.SelectedCellBorderPen,
                             _CodeMatrixRect.X + cellOffset.X + 1,
@@ -335,7 +306,7 @@ namespace CodeMatrix
         /// </summary>
         private void CalcCodeMatrixRect()
         {
-            var blockSize = new SizeF(Columns*_CellSize.Width, Rows*_CellSize.Height);
+            var blockSize = new SizeF(CodeMatrixSize.Width*_CellSize.Width, CodeMatrixSize.Height*_CellSize.Height);
             var blockOffset = new PointF((Width-blockSize.Width)/2, (Height-blockSize.Height)/2);
             _CodeMatrixRect = new RectangleF(blockOffset, blockSize);
         }
@@ -345,10 +316,10 @@ namespace CodeMatrix
         /// </summary>
         private void GenerateCodeMatrix()
         {
-            _Matrix = new byte[Columns, Rows];
-            for (int col = 0; col < Columns; col++)
-                for (int row = 0; row < Rows; row++)
-                    _Matrix[col, row] = Common.Codes[Common.Random.Next(Common.Codes.Length)];
+            _Matrix = new byte[CodeMatrixSize.Width, CodeMatrixSize.Height];
+            for (int x = 0; x < CodeMatrixSize.Width; x++)
+                for (int y = 0; y < CodeMatrixSize.Height; y++)
+                    _Matrix[x, y] = Common.Codes[Common.Random.Next(Common.Codes.Length)];
         }
 
         /// <summary>
@@ -357,7 +328,7 @@ namespace CodeMatrix
         private void InitComponent()
         {
             _CellSize = Styles.Default.CellSizeA;
-            MinimumSize = new Size(_CellSize.Width * Columns, _CellSize.Height * Rows);
+            MinimumSize = new Size(_CellSize.Width * CodeMatrixSize.Width, _CellSize.Height * CodeMatrixSize.Height);
             Size = MinimumSize + new Size(100, 10);
             Margin = Padding.Empty;
             DoubleBuffered = true;
@@ -372,7 +343,7 @@ namespace CodeMatrix
         /// </summary>
         private void OnCodeMatrixSizeChanged()
         {
-            MinimumSize = new Size(_CellSize.Width * Columns, _CellSize.Height * Rows);
+            MinimumSize = new Size(_CellSize.Width * CodeMatrixSize.Width, _CellSize.Height * CodeMatrixSize.Height);
             if (_IsLoaded)
                 ReloadCodeMatrix();
         }
